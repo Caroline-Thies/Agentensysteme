@@ -9,23 +9,20 @@ public class Mediator {
     double[] acceptanceRates;
     double minAcceptanceRate;
 
-    public static void main(String args[]){
-        List<Agent> agents = new ArrayList<Agent>();
+    public static void main(String[] args){
+        List<Agent> agents = new ArrayList<>();
         agents.add(new Agent(new File("src/main/resources/daten3A.txt")));
         agents.add(new Agent(new File("src/main/resources/daten3B.txt")));
         Mediator mediator = new Mediator(agents, 0.2);
         int rounds = 500000;
         int[] bestOffer = mediator.run(rounds);
-        int bestCost = CostLogger.getCostLogger().getBestCost();
-        System.out.println("Best Offer: " + Arrays.toString(bestOffer));
-        System.out.println("Total cost: " + bestCost);
-        System.out.println("Es wurde " + CostLogger.getCostLogger().getMoneyTransactionCount() + " mal Geld ausgetauscht.");
+        CostLogger.getCostLogger().showResults();
     }
 
     public Mediator(List<Agent> allAgents, double minAcceptanceRate){
         this.allAgents = allAgents;
         this.minAcceptanceRate = minAcceptanceRate;
-        this.allBestOffers = new ArrayList<int[]>();
+        this.allBestOffers = new ArrayList<>();
         this.acceptanceRates = new double[allAgents.size()];
         this.currentCostDeltas = new int[allAgents.size()];
         this.offersSinceLastImprovement = 0;
@@ -36,7 +33,7 @@ public class Mediator {
         for (round = 0; round < rounds; round++){
             round++;
             CostLogger.getCostLogger().newOfferStarted();
-            int[] offer = null;
+            int[] offer;
             if (allBestOffers.isEmpty()){
                 offer = generateRandomOffer();
             } else {
@@ -50,7 +47,6 @@ public class Mediator {
             }
             offersSinceLastImprovement = 0;
             CostLogger.getCostLogger().newOfferWasBestOffer();
-            System.out.println("found new best offer in round " + round + " with costs " + CostLogger.getCostLogger().getBestCost());
             allBestOffers.add(offer);
             informAgents(offer);
         }
@@ -58,7 +54,7 @@ public class Mediator {
     }
 
     boolean getTotalVote(int[] offer, int round){
-        List<VoteResponse> responses = new ArrayList<VoteResponse>();
+        List<VoteResponse> responses = new ArrayList<>();
         int totalOfferedMoney = 0;
         int totalRequestedMoney = 0;
         int totalRejected = 0;
@@ -80,10 +76,8 @@ public class Mediator {
             //System.out.println("es wurde nicht genug Geld angeboten");
             return false;
         } else {
-            System.out.println("Angeboten: " + totalOfferedMoney + ", Verlangt: " + totalRequestedMoney);
             CostLogger.getCostLogger().logMoneyTransaction();
             setCostDeltas(responses, totalRequestedMoney, totalOfferedMoney, totalRejected);
-            System.out.println(Arrays.toString(currentCostDeltas));
             return true;
         }
     }
@@ -145,13 +139,12 @@ public class Mediator {
 
     int[] generateRandomOffer(){
         int size = 200;
-        List<Integer> sortedOfferList = new ArrayList<Integer>();
+        List<Integer> sortedOfferList = new ArrayList<>();
         for (int i = 0; i < size; i++){
             sortedOfferList.add(i);
         }
         Collections.shuffle(sortedOfferList);
-        int[] shuffledOffer = sortedOfferList.stream().mapToInt(i->i).toArray();
-        return shuffledOffer;
+        return sortedOfferList.stream().mapToInt(i->i).toArray();
     }
 
     void evaluateResponses(VoteResponse[] responses) {
