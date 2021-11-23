@@ -14,7 +14,7 @@ public class Mediator {
         agents.add(new Agent(new File("src/main/resources/daten3A.txt")));
         agents.add(new Agent(new File("src/main/resources/daten3B.txt")));
         Mediator mediator = new Mediator(agents, 0.2);
-        int rounds = 500000;
+        int rounds = 200000;
         int[] bestOffer = mediator.run(rounds);
         CostLogger.getCostLogger().showResults();
     }
