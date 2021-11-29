@@ -4,12 +4,10 @@ import java.util.List;
 
 public class Controller {
     public static void main(String[] args){
-        int rounds = 500000;
+        int offerRuns = 20;
         List<Agent> agents = createAgents();
         Mediator mediator = new Mediator(agents, 0.2);
-        mediator.run(rounds);
-        int bestCost = CostLogger.getCostLogger().getBestCost();
-        System.out.println(bestCost);
+        mediator.run(offerRuns, 40000);
         CostLogger.getCostLogger().showResults();
     }
 

@@ -4,16 +4,17 @@ import java.util.List;
 
 public class CostLogger {
     private int bestCost;
-    private List<Integer> allCosts;
-    private List<Integer> bestCostIndices;
+    private List<List<Integer>> allCostsByRun;
+    private List<List<Integer>> bestCostIndicesByRun;
     private static CostLogger costLogger;
     private int moneyTransactionCount;
+    private int currentOfferRunIndex;
 
     private CostLogger(){
-        bestCost = 0;
+        bestCost = Integer.MAX_VALUE;
         moneyTransactionCount = 0;
-        allCosts = new ArrayList<>();
-        bestCostIndices = new ArrayList<>();
+        allCostsByRun = new ArrayList<>();
+        bestCostIndicesByRun = new ArrayList<>();
     }
 
     public static CostLogger getCostLogger() {
@@ -23,19 +24,31 @@ public class CostLogger {
         return CostLogger.costLogger;
     }
 
-    public void newOfferStarted(){
-        allCosts.add(0);
+    public void newOfferRunStarted(int runIndex){
+        if (runIndex >= allCostsByRun.size()){
+            allCostsByRun.add(new ArrayList<>());
+        }
+        if(runIndex >= bestCostIndicesByRun.size()){
+            bestCostIndicesByRun.add(new ArrayList<>());
+        }
+        allCostsByRun.get(runIndex).add(0);
+        currentOfferRunIndex = runIndex;
     }
 
     public void addIndividualCost(int cost){
+        List<Integer> allCosts = allCostsByRun.get(currentOfferRunIndex);
         int lastIndex = allCosts.size() - 1;
         int lastCost = allCosts.get(lastIndex);
         allCosts.set(lastIndex, lastCost + cost);
     }
 
     public void newOfferWasBestOffer(){
+        List<Integer> allCosts = allCostsByRun.get(currentOfferRunIndex);
         int lastIndex = allCosts.size() - 1;
-        bestCost = allCosts.get(lastIndex);
+        if (allCosts.get(lastIndex) < bestCost){
+            bestCost = allCosts.get(lastIndex);
+        }
+        List<Integer> bestCostIndices = bestCostIndicesByRun.get(currentOfferRunIndex);
         bestCostIndices.add(lastIndex);
         //System.out.println("Neue beste Kosten von " + bestCost + " in Iteration " + allCosts.size() + " gefunden");
     }
@@ -54,52 +67,39 @@ public class CostLogger {
 
     public void showResults() {
         System.out.println("Beste Kosten: " + bestCost);
-        System.out.println("Transaktionen: " + moneyTransactionCount);
+        //System.out.println("Transaktionen: " + moneyTransactionCount);
         addBestCostsToUI();
-        addAllCostsToUI();
         UIApp.run();
     }
 
-    public void reset(){
-        bestCost = 0;
-        allCosts = new ArrayList<>();
-        bestCostIndices = new ArrayList<>();
-        moneyTransactionCount = 0;
-    }
-
-    private void addAllCostsToUI() {
-        int[] allCostsArray = allCosts.stream().mapToInt(i -> i).toArray();
-        int[] iterationArray = new int[allCostsArray.length];
-        for(int i = 0; i < iterationArray.length; i++){
-            iterationArray[i] = i+1;
-        }
-        UIApp.addDataset(iterationArray, allCostsArray, "Alle Kosten");
-    }
-
-    private void addBestCostsToUI() {
-        int[] bestCostArray = new int[allCosts.size()];
-        int[] iterationArray = new int[bestCostArray.length];
-        int lastBestCostIndex = 0;
-        for (int i = 0; i < bestCostIndices.size(); i++){
-            if (i == 0){
-                lastBestCostIndex = bestCostIndices.get(i);
-                continue;
-            }
-            int currentBestCostIndex = bestCostIndices.get(i);
-            int bestCost = allCosts.get(currentBestCostIndex);
-            for(int j = lastBestCostIndex; j <= currentBestCostIndex; j++){
-                bestCostArray[j] = bestCost;
-            }
-            if (i == bestCostIndices.size() - 1){
-                for(int j = currentBestCostIndex; j < bestCostArray.length; j++){
+    public void addBestCostsToUI() {
+        for (int runIndex = 0; runIndex < allCostsByRun.size(); runIndex++){
+            List<Integer> allCosts = allCostsByRun.get(runIndex);
+            List<Integer> bestCostIndices = bestCostIndicesByRun.get(runIndex);
+            int[] bestCostArray = new int[allCosts.size()];
+            int[] iterationArray = new int[bestCostArray.length];
+            int lastBestCostIndex = 0;
+            for (int bestCostIndex = 0; bestCostIndex < bestCostIndices.size(); bestCostIndex++){
+                if (bestCostIndex == 0){
+                    lastBestCostIndex = bestCostIndices.get(bestCostIndex);
+                    continue;
+                }
+                int currentBestCostIndex = bestCostIndices.get(bestCostIndex);
+                int bestCost = allCosts.get(currentBestCostIndex);
+                for(int j = lastBestCostIndex; j <= currentBestCostIndex; j++){
                     bestCostArray[j] = bestCost;
                 }
+                if (bestCostIndex == bestCostIndices.size() - 1){
+                    for(int j = currentBestCostIndex; j < bestCostArray.length; j++){
+                        bestCostArray[j] = bestCost;
+                    }
+                }
+                lastBestCostIndex = currentBestCostIndex;
             }
-            lastBestCostIndex = currentBestCostIndex;
+            for (int i = 0; i < bestCostArray.length; i++){
+                iterationArray[i] = i+ 1;
+            }
+            UIApp.addDataset(iterationArray, bestCostArray, "Run " + runIndex);
         }
-        for (int i = 0; i < bestCostArray.length; i++){
-            iterationArray[i] = i+ 1;
-        }
-        UIApp.addDataset(iterationArray, bestCostArray, "Beste Kosten");
     }
 }

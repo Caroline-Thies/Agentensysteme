@@ -2,57 +2,104 @@ import java.io.File;
 import java.util.*;
 
 public class Mediator {
-    List<int[]> allBestOffers;
     List<Agent> allAgents;
     int[] currentCostDeltas;
-    int offersSinceLastImprovement;
-    double[] acceptanceRates;
-    double minAcceptanceRate;
-
-
+    //double[] acceptanceRates;
+    //double minAcceptanceRate;
+    List<OfferRun> allOfferRuns;
+    List<Integer> offerRunsToSkip;
+    OfferRun lastRemoved;
 
     public Mediator(List<Agent> allAgents, double minAcceptanceRate){
         this.allAgents = allAgents;
-        this.minAcceptanceRate = minAcceptanceRate;
-        this.allBestOffers = new ArrayList<>();
-        this.acceptanceRates = new double[allAgents.size()];
+        //this.minAcceptanceRate = minAcceptanceRate;
+        //this.acceptanceRates = new double[allAgents.size()];
         this.currentCostDeltas = new int[allAgents.size()];
-        this.offersSinceLastImprovement = 0;
+        this.allOfferRuns = new ArrayList<>();
     }
 
-    public int[] run(int rounds){
-        int round;
-        for (round = 0; round < rounds; round++){
-            round++;
-            CostLogger.getCostLogger().newOfferStarted();
-            int[] offer;
-            if (allBestOffers.isEmpty()){
-                offer = generateRandomOffer();
-            } else {
-                int[] lastBestOffer = allBestOffers.get(allBestOffers.size() - 1);
-                offer = generateMutatedOffer(lastBestOffer);
+    public int[] run(int initialRunCount, int maxMutationsSinceLastImprovement){
+        initializeOfferRuns(initialRunCount);
+        boolean validOfferRunFound = true;
+        while (validOfferRunFound) {
+            validOfferRunFound = false;
+            for (int runIndex = 0; runIndex < allOfferRuns.size(); runIndex++){
+                OfferRun offerRun = allOfferRuns.get(runIndex);
+                if (offerRun.getOffersSinceLastImprovement() > maxMutationsSinceLastImprovement){
+                    offerRun.setToSkip(true);
+                    this.lastRemoved = offerRun;
+                }
+                if (offerRun.isToSkip()){
+                    continue;
+                }
+                CostLogger.getCostLogger().newOfferRunStarted(runIndex);
+                validOfferRunFound = true;
+                int[] mutatedOffer = offerRun.getMutatedOffer();
+                boolean isAccepted = getTotalVote(mutatedOffer, runIndex);
+                offerRun.informAccepted(isAccepted);
+                if (isAccepted){
+                    CostLogger.getCostLogger().newOfferWasBestOffer();
+                    informAgents(mutatedOffer, runIndex);
+                }
             }
-            boolean isAccepted = getTotalVote(offer, round);
-            if (!isAccepted){
-                offersSinceLastImprovement += 1;
-                continue;
-            }
-            offersSinceLastImprovement = 0;
-            CostLogger.getCostLogger().newOfferWasBestOffer();
-            allBestOffers.add(offer);
-            informAgents(offer);
         }
-        return allBestOffers.get(allBestOffers.size() - 1);
+        return getBestOffer();
     }
 
-    boolean getTotalVote(int[] offer, int round){
+    private int[] getBestOffer(){
+        List<int[]> allFinalOffers = new ArrayList<>();
+        //[offer1, offer2, offer3]
+        for (OfferRun offerRun : allOfferRuns){
+            allFinalOffers.add(offerRun.getBestOffer());
+        }
+        //[Agent1: [offer2, offer1, offer3], Agent2: [offer1, offer2, offer3]]
+        List[] rankedFinalOffersByAgent = new List[allAgents.size()];
+        for (int i = 0; i < allAgents.size(); i++){
+            Agent agent = allAgents.get(i);
+            rankedFinalOffersByAgent[i] = agent.rankOffers(allFinalOffers);
+        }
+        HashMap<Integer, Integer> finalOfferScores = new HashMap<>();
+        for (int i = 0; i < rankedFinalOffersByAgent.length; i++){
+            List<Integer> agentRanking = rankedFinalOffersByAgent[i];
+            for (int j = 0; j < agentRanking.size(); j++){
+                int offer_index = agentRanking.get(j);
+                if (i == 0){
+                    finalOfferScores.put(offer_index, j);
+                } else {
+                    finalOfferScores.put(offer_index, finalOfferScores.get(offer_index) + j);
+                }
+            }
+        }
+        System.out.println("---");
+        finalOfferScores.forEach((key, value) -> System.out.println(key + " => " + value));
+
+        int minKey = 0;
+        int minValue = Integer.MAX_VALUE;
+        for(int key : finalOfferScores.keySet()) {
+            int value = finalOfferScores.get(key);
+            if(value < minValue) {
+                minValue = value;
+                minKey = key;
+            }
+        }
+        System.out.println("Run " + minKey + " won!");
+        return allFinalOffers.get(minKey);
+    }
+
+    private void initializeOfferRuns(int initialRunCount){
+        for(int i = 0; i < initialRunCount; i++){
+            this.allOfferRuns.add(new OfferRun(OfferRun.generateRandomOffer()));
+        }
+    }
+
+    boolean getTotalVote(int[] offer, int runIndex){
         List<VoteResponse> responses = new ArrayList<>();
         int totalOfferedMoney = 0;
         int totalRequestedMoney = 0;
         int totalRejected = 0;
         boolean allAccepted = true;
         for (Agent agent: allAgents) {
-            VoteResponse response = getAgentVote(agent, offer, round);
+            VoteResponse response = getAgentVote(agent, offer, runIndex);
             responses.add(response);
             totalOfferedMoney += response.getOfferedMoney();
             totalRequestedMoney += response.getRequestedMoney();
@@ -87,61 +134,14 @@ public class Mediator {
         }
     }
 
-    void adjustAcceptanceRate(Agent agent, boolean isAccepted, int round){
-        int agentIndex = allAgents.indexOf(agent);
-        int acceptedValue = isAccepted ? 1 : 0;
-        double currentAcceptanceRate = acceptanceRates[agentIndex];
-        acceptanceRates[agentIndex] = (currentAcceptanceRate*(round-1) + acceptedValue) / (double)round;
+    VoteResponse getAgentVote(Agent agent, int[] offer, int runIndex){
+        return agent.vote(offer, runIndex);
     }
 
-    VoteResponse getAgentVote(Agent agent, int[] offer, int round){
-        return agent.vote(offer);
-        //int agentIndex = allAgents.indexOf(agent);
-        //double agentAcceptanceRate = acceptanceRates[agentIndex];
-        //if (agentAcceptanceRate >= minAcceptanceRate){
-        //    return agent.vote(offer);
-        //} else {
-        //    return new VoteResponse(true);
-        //}
-    }
-
-    void informAgents(int[] newBestOffer){
+    void informAgents(int[] newBestOffer, int runIndex){
         for (int i = 0; i < allAgents.size(); i++) {
             Agent agent = allAgents.get(i);
-            agent.setCurrentAcceptedOffer(newBestOffer, currentCostDeltas[i]);
+            agent.setCurrentAcceptedOffer(newBestOffer, currentCostDeltas[i], runIndex);
         }
     }
-
-    int[] generateMutatedOffer(int[] offer) {
-        Random r = new Random();
-        int[] mutatedOffer = offer.clone();
-        int swapCount = 1;
-        for(int i = 0; i < swapCount; i++) {
-            int indexA = r.nextInt(offer.length - 1);
-            int indexB = r.nextInt(offer.length - 1);
-            while (indexA == indexB) {
-                indexB = r.nextInt(offer.length - 1);
-            }
-            int mem = mutatedOffer[indexA];
-            mutatedOffer[indexA] = mutatedOffer[indexB];
-            mutatedOffer[indexB] = mem;
-        }
-        return mutatedOffer;
-    }
-
-    int[] generateRandomOffer(){
-        int size = 200;
-        List<Integer> sortedOfferList = new ArrayList<>();
-        for (int i = 0; i < size; i++){
-            sortedOfferList.add(i);
-        }
-        Collections.shuffle(sortedOfferList);
-        return sortedOfferList.stream().mapToInt(i->i).toArray();
-    }
-
-    void evaluateResponses(VoteResponse[] responses) {
-
-    }
-
-    void adjustAcceptanceRate(){}
 }
