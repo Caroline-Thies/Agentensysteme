@@ -78,7 +78,6 @@ public class Agent {
             int[] offer2 = offers.get(index2);
             return calcOfferCost(offer1) - calcOfferCost(offer2);
         });
-        System.out.println(indexList);
         return indexList;
     }
 }

@@ -7,7 +7,7 @@ public class Controller {
         int offerRuns = 20;
         List<Agent> agents = createAgents();
         Mediator mediator = new Mediator(agents, 0.2);
-        mediator.run(offerRuns, 40000);
+        mediator.run(offerRuns, 30000);
         CostLogger.getCostLogger().showResults();
     }
 

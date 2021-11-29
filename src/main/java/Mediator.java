@@ -1,4 +1,3 @@
-import java.io.File;
 import java.util.*;
 
 public class Mediator {
@@ -18,17 +17,17 @@ public class Mediator {
         this.allOfferRuns = new ArrayList<>();
     }
 
-    public int[] run(int initialRunCount, int maxMutationsSinceLastImprovement){
+    public int[] run(int initialRunCount, int deleteInterval){
         initializeOfferRuns(initialRunCount);
         boolean validOfferRunFound = true;
+        int totalRunIndex = 0;
         while (validOfferRunFound) {
             validOfferRunFound = false;
+            if((totalRunIndex + 1) % deleteInterval == 0){
+                setWorstHalfToSkip();
+            }
             for (int runIndex = 0; runIndex < allOfferRuns.size(); runIndex++){
                 OfferRun offerRun = allOfferRuns.get(runIndex);
-                if (offerRun.getOffersSinceLastImprovement() > maxMutationsSinceLastImprovement){
-                    offerRun.setToSkip(true);
-                    this.lastRemoved = offerRun;
-                }
                 if (offerRun.isToSkip()){
                     continue;
                 }
@@ -42,18 +41,25 @@ public class Mediator {
                     informAgents(mutatedOffer, runIndex);
                 }
             }
+            totalRunIndex++;
         }
-        return getBestOffer();
+        return lastRemoved.getBestOffer();
     }
 
-    private int[] getBestOffer(){
+    private void setWorstHalfToSkip(){
         List<int[]> allFinalOffers = new ArrayList<>();
-        //[offer1, offer2, offer3]
+        List<OfferRun> allFinalOfferRuns = new ArrayList<>();
         for (OfferRun offerRun : allOfferRuns){
-            allFinalOffers.add(offerRun.getBestOffer());
+            if(!offerRun.isToSkip()) {
+                allFinalOffers.add(offerRun.getBestOffer());
+                allFinalOfferRuns.add(offerRun);
+            }
         }
-        //[Agent1: [offer2, offer1, offer3], Agent2: [offer1, offer2, offer3]]
-        List[] rankedFinalOffersByAgent = new List[allAgents.size()];
+        if(allFinalOfferRuns.size() == 1){
+            allFinalOfferRuns.get(0).setToSkip(true);
+            lastRemoved = allFinalOfferRuns.get(0);
+        }
+        List<Integer>[] rankedFinalOffersByAgent = new ArrayList[allAgents.size()];
         for (int i = 0; i < allAgents.size(); i++){
             Agent agent = allAgents.get(i);
             rankedFinalOffersByAgent[i] = agent.rankOffers(allFinalOffers);
@@ -70,20 +76,19 @@ public class Mediator {
                 }
             }
         }
-        System.out.println("---");
-        finalOfferScores.forEach((key, value) -> System.out.println(key + " => " + value));
+        //finalOfferScores.forEach((key, value) -> System.out.println(key + " => " + value));
 
-        int minKey = 0;
-        int minValue = Integer.MAX_VALUE;
-        for(int key : finalOfferScores.keySet()) {
-            int value = finalOfferScores.get(key);
-            if(value < minValue) {
-                minValue = value;
-                minKey = key;
-            }
+        List<Integer> scoreKeys = rankedFinalOffersByAgent[0];
+        scoreKeys.sort((key1, key2) -> {
+            int value1 = finalOfferScores.get(key1);
+            int value2 = finalOfferScores.get(key2);
+            return value1 - value2;
+        });
+        for (int i = scoreKeys.size() - 1; i >= scoreKeys.size() / 2; i--){
+            int scoreKey = scoreKeys.get(i);
+            //System.out.println("Setting Run " + scoreKey + " to skip");
+            allFinalOfferRuns.get(scoreKey).setToSkip(true);
         }
-        System.out.println("Run " + minKey + " won!");
-        return allFinalOffers.get(minKey);
     }
 
     private void initializeOfferRuns(int initialRunCount){
