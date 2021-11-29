@@ -37,7 +37,7 @@ public class CostLogger {
         int lastIndex = allCosts.size() - 1;
         bestCost = allCosts.get(lastIndex);
         bestCostIndices.add(lastIndex);
-        System.out.println("Neue beste Kosten von " + bestCost + " in Iteration " + allCosts.size() + " gefunden");
+        //System.out.println("Neue beste Kosten von " + bestCost + " in Iteration " + allCosts.size() + " gefunden");
     }
 
     public int getBestCost() {
@@ -58,6 +58,13 @@ public class CostLogger {
         addBestCostsToUI();
         addAllCostsToUI();
         UIApp.run();
+    }
+
+    public void reset(){
+        bestCost = 0;
+        allCosts = new ArrayList<>();
+        bestCostIndices = new ArrayList<>();
+        moneyTransactionCount = 0;
     }
 
     private void addAllCostsToUI() {
