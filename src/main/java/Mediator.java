@@ -1,109 +1,101 @@
 import java.util.*;
 
 public class Mediator {
-    List<Agent> allAgents;
+    HashMap<Integer, Agent> allAgents;
     int[] currentCostDeltas;
-    //double[] acceptanceRates;
-    //double minAcceptanceRate;
-    List<OfferRun> allOfferRuns;
-    List<Integer> offerRunsToSkip;
-    OfferRun lastRemoved;
+    HashMap<String, OfferRun> allOfferRuns;
+    int lastRemovedId;
 
-    public Mediator(List<Agent> allAgents, double minAcceptanceRate){
+    public Mediator(HashMap<Integer, Agent> allAgents, double minAcceptanceRate){
         this.allAgents = allAgents;
-        //this.minAcceptanceRate = minAcceptanceRate;
-        //this.acceptanceRates = new double[allAgents.size()];
         this.currentCostDeltas = new int[allAgents.size()];
-        this.allOfferRuns = new ArrayList<>();
+        this.allOfferRuns = new HashMap<>();
     }
 
     public int[] run(int initialRunCount, int totalIterations, int replacementCount){
         initializeOfferRuns(initialRunCount);
         for(int totalRunIndex = 0; totalRunIndex < totalIterations; totalRunIndex++) {
-            if(totalRunIndex % (totalIterations / replacementCount) == 0){
+            if(totalRunIndex % (totalIterations / replacementCount) == 0 && totalRunIndex > 0){
                 replaceWorstHalf();
             }
-            for (int runIndex = 0; runIndex < allOfferRuns.size(); runIndex++){
-                OfferRun offerRun = allOfferRuns.get(runIndex);
+            for (String runId : allOfferRuns.keySet()){
+                OfferRun offerRun = allOfferRuns.get(runId);
                 if (offerRun.isToSkip()){
                     continue;
                 }
-                CostLogger.getCostLogger().newOfferRunStarted(runIndex);
+                CostLogger.getCostLogger().newOfferRunStarted(runId);
                 int[] mutatedOffer = offerRun.getMutatedOffer();
-                boolean isAccepted = getTotalVote(mutatedOffer, runIndex);
+                boolean isAccepted = getTotalVote(mutatedOffer, runId);
                 offerRun.informAccepted(isAccepted);
                 if (isAccepted){
                     CostLogger.getCostLogger().newOfferWasBestOffer();
-                    informAgents(mutatedOffer, runIndex);
+                    informAgents(mutatedOffer, runId);
                 }
             }
         }
         return new int[0];
     }
 
-    private void replaceWorstHalf(){
-        List<int[]> allFinalOffers = new ArrayList<>();
-        List<OfferRun> allFinalOfferRuns = new ArrayList<>();
-        for (OfferRun offerRun : allOfferRuns){
-            if(!offerRun.isToSkip()) {
-                allFinalOffers.add(offerRun.getBestOffer());
-                allFinalOfferRuns.add(offerRun);
+    private HashMap<String, Integer> getOfferIdRanking(){
+        HashMap<String, int[]> bestOffersByActiveRunIds = new HashMap<>();
+        for (String runId : allOfferRuns.keySet()){
+            OfferRun offerRun = allOfferRuns.get(runId);
+            if(!offerRun.isToSkip()){
+                bestOffersByActiveRunIds.put(runId, offerRun.getBestOffer());
             }
         }
-        if(allFinalOfferRuns.size() == 1){
-            allFinalOfferRuns.get(0).setToSkip(true);
-            lastRemoved = allFinalOfferRuns.get(0);
-        }
-        List<Integer>[] rankedFinalOffersByAgent = new ArrayList[allAgents.size()];
-        for (int i = 0; i < allAgents.size(); i++){
-            Agent agent = allAgents.get(i);
-            rankedFinalOffersByAgent[i] = agent.rankOffers(allFinalOffers);
-        }
-        HashMap<Integer, Integer> finalOfferScores = new HashMap<>();
-        for (int i = 0; i < rankedFinalOffersByAgent.length; i++){
-            List<Integer> agentRanking = rankedFinalOffersByAgent[i];
-            for (int j = 0; j < agentRanking.size(); j++){
-                int offer_index = agentRanking.get(j);
-                if (i == 0){
-                    finalOfferScores.put(offer_index, j);
+        HashMap<String, Integer> totalRankByRunId = new HashMap<>();
+        for(int agentId : allAgents.keySet()){
+            Agent agent = allAgents.get(agentId);
+            List<String> runIdRanking = agent.rankRunIdsByBestOffer(bestOffersByActiveRunIds);
+            for (int rankingIndex = 0; rankingIndex < runIdRanking.size(); rankingIndex++){
+                String runId = runIdRanking.get(rankingIndex);
+                if (totalRankByRunId.containsKey(runId)){
+                    totalRankByRunId.put(runId, totalRankByRunId.get(runId) + rankingIndex);
                 } else {
-                    finalOfferScores.put(offer_index, finalOfferScores.get(offer_index) + j);
+                    totalRankByRunId.put(runId, rankingIndex);
                 }
             }
         }
-        //finalOfferScores.forEach((key, value) -> System.out.println(key + " => " + value));
+        return totalRankByRunId;
+    }
 
-        List<Integer> scoreKeys = rankedFinalOffersByAgent[0];
-        scoreKeys.sort((key1, key2) -> {
-            int value1 = finalOfferScores.get(key1);
-            int value2 = finalOfferScores.get(key2);
-            return value1 - value2;
-        });
-        for (int badIndex = scoreKeys.size() - 1; badIndex >= scoreKeys.size() / 2; badIndex--){
-            int badScoreKey = scoreKeys.get(badIndex);
-            allFinalOfferRuns.get(badScoreKey).setToSkip(true);
-            int goodIndex = scoreKeys.size() - badIndex - 1;
-            int goodScoreKey = scoreKeys.get(goodIndex);
-            OfferRun runToClone = allFinalOfferRuns.get(goodScoreKey);
-            allOfferRuns.add(new OfferRun(runToClone.getBestOffer()));
-            //CostLogger.getCostLogger().addCloneOfferRun(allOfferRuns.indexOf(runToClone));
+    private void replaceWorstHalf(){
+        HashMap<String, Integer> totalRankByRunId = getOfferIdRanking();
+        List<String> sortedRunIds = new ArrayList<>(totalRankByRunId.keySet());
+        sortedRunIds.sort(Comparator.comparingInt(totalRankByRunId::get));
+        for (int sortedIndex = 0; sortedIndex < sortedRunIds.size() / 2; sortedIndex++){
+            String runId = sortedRunIds.get(sortedIndex);
+            OfferRun successfulOfferRun = allOfferRuns.get(runId);
+            OfferRun offerRunOffspring = new OfferRun(successfulOfferRun);
+            for (Agent agent : allAgents.values()){
+                agent.addRunOffspring(successfulOfferRun.getRunId(), offerRunOffspring.getRunId());
+            }
+            CostLogger.getCostLogger().addOfferRunOffspring(successfulOfferRun.getRunId(), offerRunOffspring.getRunId());
+            allOfferRuns.put(offerRunOffspring.getRunId(), offerRunOffspring);
+        }
+        for (int sortedIndex = sortedRunIds.size() / 2; sortedIndex < sortedRunIds.size(); sortedIndex++){
+            String runId = sortedRunIds.get(sortedIndex);
+            OfferRun failedOfferRun = allOfferRuns.get(runId);
+            failedOfferRun.setToSkip(true);
         }
     }
 
     private void initializeOfferRuns(int initialRunCount){
         for(int i = 0; i < initialRunCount; i++){
-            this.allOfferRuns.add(new OfferRun(OfferRun.generateRandomOffer()));
+            OfferRun offerRun = new OfferRun(OfferRun.generateRandomOffer(), String.valueOf(i));
+            this.allOfferRuns.put(offerRun.getRunId(), offerRun);
         }
     }
 
-    boolean getTotalVote(int[] offer, int runIndex){
+    boolean getTotalVote(int[] offer, String runId){
         List<VoteResponse> responses = new ArrayList<>();
         int totalOfferedMoney = 0;
         int totalRequestedMoney = 0;
         int totalRejected = 0;
         boolean allAccepted = true;
-        for (Agent agent: allAgents) {
-            VoteResponse response = getAgentVote(agent, offer, runIndex);
+        for (Agent agent: allAgents.values()) {
+            VoteResponse response = getAgentVote(agent, offer, runId);
             responses.add(response);
             totalOfferedMoney += response.getOfferedMoney();
             totalRequestedMoney += response.getRequestedMoney();
@@ -113,10 +105,8 @@ public class Mediator {
             }
         }
         if (allAccepted){
-            //System.out.println("alle haben akzeptiert");
             return true;
         } else if (totalRequestedMoney > totalOfferedMoney) {
-            //System.out.println("es wurde nicht genug Geld angeboten");
             return false;
         } else {
             CostLogger.getCostLogger().logMoneyTransaction();
@@ -138,14 +128,14 @@ public class Mediator {
         }
     }
 
-    VoteResponse getAgentVote(Agent agent, int[] offer, int runIndex){
+    VoteResponse getAgentVote(Agent agent, int[] offer, String runIndex){
         return agent.vote(offer, runIndex);
     }
 
-    void informAgents(int[] newBestOffer, int runIndex){
+    void informAgents(int[] newBestOffer, String runId){
         for (int i = 0; i < allAgents.size(); i++) {
             Agent agent = allAgents.get(i);
-            agent.setCurrentAcceptedOffer(newBestOffer, currentCostDeltas[i], runIndex);
+            agent.setCurrentAcceptedOffer(newBestOffer, currentCostDeltas[i], runId);
         }
     }
 }

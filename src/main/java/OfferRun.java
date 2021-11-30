@@ -8,6 +8,9 @@ public class OfferRun {
     private int offersSinceLastImprovement;
     private int[] lastOffer;
     private boolean toSkip;
+    private String runId;
+    private int childrenCount;
+    private String parentId;
 
     public boolean isToSkip() {
         return toSkip;
@@ -17,11 +20,38 @@ public class OfferRun {
         this.toSkip = toSkip;
     }
 
-    public OfferRun(int[] firstOffer){
+    public String getRunId() {
+        return runId;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public OfferRun(OfferRun parentRun){
+        this.allBestOffers = parentRun.allBestOffers;
+        this.offersSinceLastImprovement = parentRun.offersSinceLastImprovement;
+        this.lastOffer = parentRun.lastOffer;
+        this.childrenCount = 0;
+        this.toSkip = false;
+        this.parentId = parentRun.getRunId();
+        this.runId = parentId + "-" + parentRun.getNextChildId();
+    }
+
+    public OfferRun(int[] firstOffer, String runId){
         this.allBestOffers = new ArrayList<>();
         this.allBestOffers.add(firstOffer);
         this.offersSinceLastImprovement = 0;
         this.toSkip = false;
+        this.runId = runId;
+        childrenCount = 0;
+        parentId = "";
+    }
+
+    public int getNextChildId(){
+        int nextChildId = childrenCount;
+        childrenCount++;
+        return  nextChildId;
     }
 
     public int[] getMutatedOffer(){
