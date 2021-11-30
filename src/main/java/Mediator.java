@@ -17,14 +17,11 @@ public class Mediator {
         this.allOfferRuns = new ArrayList<>();
     }
 
-    public int[] run(int initialRunCount, int deleteInterval){
+    public int[] run(int initialRunCount, int totalIterations, int replacementCount){
         initializeOfferRuns(initialRunCount);
-        boolean validOfferRunFound = true;
-        int totalRunIndex = 0;
-        while (validOfferRunFound) {
-            validOfferRunFound = false;
-            if((totalRunIndex + 1) % deleteInterval == 0){
-                setWorstHalfToSkip();
+        for(int totalRunIndex = 0; totalRunIndex < totalIterations; totalRunIndex++) {
+            if(totalRunIndex % (totalIterations / replacementCount) == 0){
+                replaceWorstHalf();
             }
             for (int runIndex = 0; runIndex < allOfferRuns.size(); runIndex++){
                 OfferRun offerRun = allOfferRuns.get(runIndex);
@@ -32,7 +29,6 @@ public class Mediator {
                     continue;
                 }
                 CostLogger.getCostLogger().newOfferRunStarted(runIndex);
-                validOfferRunFound = true;
                 int[] mutatedOffer = offerRun.getMutatedOffer();
                 boolean isAccepted = getTotalVote(mutatedOffer, runIndex);
                 offerRun.informAccepted(isAccepted);
@@ -41,12 +37,11 @@ public class Mediator {
                     informAgents(mutatedOffer, runIndex);
                 }
             }
-            totalRunIndex++;
         }
-        return lastRemoved.getBestOffer();
+        return new int[0];
     }
 
-    private void setWorstHalfToSkip(){
+    private void replaceWorstHalf(){
         List<int[]> allFinalOffers = new ArrayList<>();
         List<OfferRun> allFinalOfferRuns = new ArrayList<>();
         for (OfferRun offerRun : allOfferRuns){
@@ -84,10 +79,14 @@ public class Mediator {
             int value2 = finalOfferScores.get(key2);
             return value1 - value2;
         });
-        for (int i = scoreKeys.size() - 1; i >= scoreKeys.size() / 2; i--){
-            int scoreKey = scoreKeys.get(i);
-            //System.out.println("Setting Run " + scoreKey + " to skip");
-            allFinalOfferRuns.get(scoreKey).setToSkip(true);
+        for (int badIndex = scoreKeys.size() - 1; badIndex >= scoreKeys.size() / 2; badIndex--){
+            int badScoreKey = scoreKeys.get(badIndex);
+            allFinalOfferRuns.get(badScoreKey).setToSkip(true);
+            int goodIndex = scoreKeys.size() - badIndex - 1;
+            int goodScoreKey = scoreKeys.get(goodIndex);
+            OfferRun runToClone = allFinalOfferRuns.get(goodScoreKey);
+            allOfferRuns.add(new OfferRun(runToClone.getBestOffer()));
+            //CostLogger.getCostLogger().addCloneOfferRun(allOfferRuns.indexOf(runToClone));
         }
     }
 

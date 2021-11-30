@@ -25,14 +25,21 @@ public class CostLogger {
     }
 
     public void newOfferRunStarted(int runIndex){
-        if (runIndex >= allCostsByRun.size()){
+        while (runIndex >= allCostsByRun.size()){
             allCostsByRun.add(new ArrayList<>());
         }
-        if(runIndex >= bestCostIndicesByRun.size()){
+        while(runIndex >= bestCostIndicesByRun.size()){
             bestCostIndicesByRun.add(new ArrayList<>());
         }
         allCostsByRun.get(runIndex).add(0);
         currentOfferRunIndex = runIndex;
+    }
+
+    public void addCloneOfferRun(int sourceIndex){
+        List<Integer> allCosts = new ArrayList<>(allCostsByRun.get(sourceIndex));
+        List<Integer> bestCostIndices = new ArrayList<>(bestCostIndicesByRun.get(sourceIndex));
+        allCostsByRun.add(allCosts);
+        bestCostIndicesByRun.add(bestCostIndices);
     }
 
     public void addIndividualCost(int cost){

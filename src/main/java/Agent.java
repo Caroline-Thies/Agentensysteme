@@ -34,7 +34,7 @@ public class Agent {
 
     public VoteResponse vote(int[] offer, int runIndex) {
         int cost = calcOfferCost(offer);
-        if(runIndex >= currentCostByRun.size()){
+        while(runIndex >= currentCostByRun.size()){
             currentCostByRun.add(Integer.MAX_VALUE);
         }
         int currentCost = currentCostByRun.get(runIndex);
@@ -60,7 +60,7 @@ public class Agent {
     }
 
     public void setCurrentAcceptedOffer(int[] currentAcceptedOffer, int costDelta, int runIndex) {
-        if (runIndex >= currentAcceptedOfferByRun.size()){
+        while (runIndex >= currentAcceptedOfferByRun.size()){
             currentAcceptedOfferByRun.add(currentAcceptedOffer);
         }
         this.currentAcceptedOfferByRun.set(runIndex, currentAcceptedOffer);
