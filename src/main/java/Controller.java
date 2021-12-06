@@ -5,10 +5,10 @@ import java.util.List;
 
 public class Controller {
     public static void main(String[] args){
-        int offerRuns = 20;
+        int offerRuns = 50;
         HashMap<Integer, Agent> agents = createAgents();
         Mediator mediator = new Mediator(agents, 0.2);
-        mediator.run(offerRuns, 500000, 50);
+        mediator.run(offerRuns, 100000, 10);
         CostLogger.getCostLogger().showResults();
     }
 
