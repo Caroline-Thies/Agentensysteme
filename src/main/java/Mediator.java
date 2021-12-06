@@ -33,7 +33,13 @@ public class Mediator {
                 }
             }
         }
-        return new int[0];
+        System.out.println("Es wurden insgesamt " + allOfferRuns.size() + " partielle Läufe simuliert");
+        HashMap<String, Integer> totalRankByRunId = getOfferIdRanking();
+        List<String> sortedRunIds = new ArrayList<>(totalRankByRunId.keySet());
+        sortedRunIds.sort(Comparator.comparingInt(totalRankByRunId::get));
+        String bestId = sortedRunIds.get(sortedRunIds.size() - 1);
+        System.out.println("Lauf " + bestId + " hatte die besten Kosten");
+        return allOfferRuns.get(bestId).getBestOffer();
     }
 
     private HashMap<String, Integer> getOfferIdRanking(){

@@ -8,7 +8,7 @@ public class Controller {
         int offerRuns = 20;
         HashMap<Integer, Agent> agents = createAgents();
         Mediator mediator = new Mediator(agents, 0.2);
-        mediator.run(offerRuns, 100000, 3);
+        mediator.run(offerRuns, 500000, 50);
         CostLogger.getCostLogger().showResults();
     }
 

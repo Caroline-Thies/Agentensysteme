@@ -20,19 +20,19 @@ public class UIApp {
 
                 frame.setSize(900, 600);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setVisible(true);
 
                 JFreeChart chart = ChartFactory.createXYLineChart("Results",
                         "Iteration",
                         "Kosten",
                         UIApp.dataset,
                         PlotOrientation.VERTICAL,
-                        true,
+                        false,
                         true,
                         false);
 
                 ChartPanel chartPanel = new ChartPanel(chart);
                 frame.getContentPane().add(chartPanel);
+                frame.setVisible(true);
             }
         });
     }
