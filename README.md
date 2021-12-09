@@ -40,5 +40,5 @@ Alle Grundbausteine für diesen Ansatz sind hier bereits vorhanden. Durch das Ra
 ![Evolutionäre Agenten](./images/5resultChartEvolutionary.png)
 Wie man leicht sieht, konzentriert sich bei diesem Ansatz die Rechenleistung in späteren Iterationen immer stärker auf die besten Lösungen. Durch die Einigungen mithilfe von Transaktionen anstatt einer Akzeptanzrate ist jede Iteration sehr günstig, es können also problemlos mehrere Runs berechnet werden.
   
-Um die Ergebnisse dieses Ansatzes repräsentativer zu berechnen und darzustellen als durch einzelne Durchläufe, wurde das Programm insgesamt 189 mal ausgeführt. Dabei hat es jedes Mal 50 aktive Runs in 100.000 Iterationen simuliert, wobei jeweils 10 Mal die schlechte Hälfte durch Nachkommen der guten Hälfte ersetzt wurde. Dabei ist folgende Kostenverteilung entstanden:
-![Evolutionäre Agenten Kostenverteilung](./images/costDistribution.png)
+Um die Ergebnisse dieses Ansatzes repräsentativer zu berechnen und darzustellen als durch einzelne Durchläufe, wurde das Programm insgesamt 189 mal ausgeführt. Dabei hat es jedes Mal 50 aktive Runs in 100.000 Iterationen simuliert, wobei jeweils 10 Mal die schlechte Hälfte durch Nachkommen der guten Hälfte ersetzt wurde. Dabei ist folgende Kostenverteilung entstanden:  
+![Evolutionäre Agenten Kostenverteilung](./images/costDistribution.jpgf)
