@@ -41,5 +41,5 @@ Alle Grundbausteine für diesen Ansatz sind hier bereits vorhanden. Durch das Ra
 Wie man leicht sieht, konzentriert sich bei diesem Ansatz die Rechenleistung in späteren Iterationen immer stärker auf die besten Lösungen. Durch die Einigungen mithilfe von Transaktionen anstatt einer Akzeptanzrate ist jede Iteration sehr günstig, es können also problemlos mehrere Runs berechnet werden.
   
 Um die Ergebnisse dieses Ansatzes repräsentativer zu berechnen und darzustellen als durch einzelne Durchläufe, wurde das Programm insgesamt 189 mal ausgeführt. Dabei hat es jedes Mal 50 aktive Runs in 100.000 Iterationen simuliert, wobei jeweils 10 Mal die schlechte Hälfte durch Nachkommen der guten Hälfte ersetzt wurde. Dabei ist folgende Kostenverteilung entstanden:  
-![Evolutionäre Agenten Kostenverteilung](./images/costDistribution.jpg)
+![Evolutionäre Agenten Kostenverteilung](./images/costDistribution.jpg)  
 Die Kosten waren dabei bis auf eine Ausnahme stabil unter 6000, mit einem Durchschnitt von 5541.63 und einem Median von 5515. Da sich diese Kosten auf 200 Schritte bei 2 Agenten verteilt haben, entspricht das einem Durchschnitt von 13.85 bzw. einem Median von 13.79 pro Schritt. Beachtet man den Wertebereich von 1 bis 99 der Schrittkosten, ist dies bereits ein sehr gutes Ergebnis, das in relativ kurzer Zeit berechnet werden kann.
