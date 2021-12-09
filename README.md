@@ -1,6 +1,6 @@
 Dieses Agentensystem ist ein Projekt von Caroline Thies, David Schönberger und Max Guggenberger, erstellt im Rahmen einer Vorlesung an der DHBW 2021.
   
-Das Ziel dieses Systems ist es, die Zahlen von 1 bis 200 in eine optimale Reihenfolge zu sortieren. Optimal bedeutet, die Kosten für diese Reihenfolge zu minimieren. Die Kosten werden von zwei Agenten mit unterschiedlichen Kostenmatrizen bestimmt. Diese definiert für jede Kombination aus zwei Zahlen zwischen 1 und 200 die Einzelkosten für diese Reihenfolge.
+Das Ziel dieses Systems ist es, die Zahlen von 1 bis 200 in eine optimale Reihenfolge zu sortieren. Optimal bedeutet, die Kosten für diese Reihenfolge zu minimieren. Die Kosten werden von zwei Agenten mit unterschiedlichen Kostenmatrizen bestimmt. Diese definiert für jede Kombination aus zwei Zahlen zwischen 1 und 200 die Einzelkosten für diese Reihenfolge. Die Einzelkosten bewegen sich dabei von 1 bis 99.
   
 Die Agenten arbeiten egoistisch, versuchen also nur ihre eigenen Kosten zu minimieren. Die Kosten anderer Agenten sind für sie nicht relevant. 
   
@@ -42,3 +42,4 @@ Wie man leicht sieht, konzentriert sich bei diesem Ansatz die Rechenleistung in 
   
 Um die Ergebnisse dieses Ansatzes repräsentativer zu berechnen und darzustellen als durch einzelne Durchläufe, wurde das Programm insgesamt 189 mal ausgeführt. Dabei hat es jedes Mal 50 aktive Runs in 100.000 Iterationen simuliert, wobei jeweils 10 Mal die schlechte Hälfte durch Nachkommen der guten Hälfte ersetzt wurde. Dabei ist folgende Kostenverteilung entstanden:  
 ![Evolutionäre Agenten Kostenverteilung](./images/costDistribution.jpg)
+Die Kosten waren dabei bis auf eine Ausnahme stabil unter 6000, mit einem Durchschnitt von 5541.63 und einem Median von 5515. Da sich diese Kosten auf 200 Schritte bei 2 Agenten verteilt haben, entspricht das einem Durchschnitt von 13.85 bzw. einem Median von 13.79 pro Schritt. Beachtet man den Wertebereich von 1 bis 99 der Schrittkosten, ist dies bereits ein sehr gutes Ergebnis, das in relativ kurzer Zeit berechnet werden kann.
