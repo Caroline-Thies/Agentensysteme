@@ -20,3 +20,6 @@ Akzeptiert ein Agent einen Vertrag, teilt er dem Mediator zusätzlich eine Zahl 
   
 Solange sie weniger Geld zahlen, als sie durch den neuen Vorschlag an Kosten einsparen, bzw. mehr Geld verlangen, als sie an Kosten dazugewinnen, steht dieser Ansatz nicht im Konflikt mit egoistischem Handeln. Ganz im Gegenteil gibt es den Agenten ein Mittel, ihre eigenen Interessen durchzusetzen - aber ohne den Gesamtkosten oder auch nur den Interessen anderer Agenten Schaden zuzufügen. Die folgende Abbildung zeigt erneut einen vergrößerten Abschnitt einer Kostenentwicklung, diesmal mit den beschriebenen Transaktionen:
 ![Mit Transaktionen wird mehr akzeptiert](./images/2resultChartWithTransaction.png)
+
+Wie man leicht sieht, sinken die Gesamtkosten nun deutlich schneller. Beinahe jede Verbesserung der Gesamtkosten wird von beiden Agenten akzeptiert, da diese durch Transaktionen beide von der Verbesserung profitieren können. Noch immer werden gelegentlich Gesamtverbesserungen abgeleht, aber das lässt sich bei dieser Bilanz gut verschmerzen.
+
