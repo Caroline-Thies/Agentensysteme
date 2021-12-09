@@ -22,4 +22,12 @@ Solange sie weniger Geld zahlen, als sie durch den neuen Vorschlag an Kosten ein
 ![Mit Transaktionen wird mehr akzeptiert](./images/2resultChartWithTransaction.png)
 
 Wie man leicht sieht, sinken die Gesamtkosten nun deutlich schneller. Beinahe jede Verbesserung der Gesamtkosten wird von beiden Agenten akzeptiert, da diese durch Transaktionen beide von der Verbesserung profitieren können. Noch immer werden gelegentlich Gesamtverbesserungen abgeleht, aber das lässt sich bei dieser Bilanz gut verschmerzen.
+  
+Denn dieser Mechanismus hat gegenüber dem reinen Zustimmen oder Ablehnen noch einen ganz anderen Vorteil: Er lässt sich problemlos skalieren. Müssen nicht nur zwei, sondern fünf, zwanzig oder hunderte Agenten verhandeln, wird es schnell schwierig für alle eine Verbesserung zu finden. Können aber angebotenes und gefordertes Geld aufsummiert und verglichen werden, kann deutlich leichter eine für alle Agenten positive Einigung erreicht werden.
 
+Aber es geht noch besser. Die folgende Abbildung zeigt die Entwicklung der besten Gesamtkosten in mehreren unabhängigen Durchläufen:
+![Mehrere Durchläufe](./images/3multipleRuns.png)
+Wie man leicht sieht, schwanken die Ergebnisse stark. Für ein besseres Ergebnis könnte man also immer mehrer Runs simulieren und zuletzt den besten Vorschlag des besten Runs zurückgeben. Zudem sieht es danach aus, als wären Runs mit schlechteren Endergebnissen oft schon früher schlechter als Runs mit besseren Endergebnissen. Es wäre also naheliegend, solche schlechten Runs früher zu terminieren, um Rechenzeit zu sparen. Dabei darf man aber eine wichtige Grundregel des Systems nicht vergessen: Der Mediator weiß nicht, welcher Vorschlag welche Kosten verursacht, weder insgesamt noch pro Agent. Wie soll er also einen "besten" Run ermittlen?
+  
+Dieses Problem lässt sich mit einer einfachen Überlegung umgehen. Die Agenten können bereits zwei einzelne Vorschläge miteinander vergleichen. Und ein Vergleich ist alles, was für eine Sortierung erforderlich ist. Der Mediator kann also die Agenten bitten, die besten Vorschläge der einzelnen Runs nach Kosten zu sortieren. Aus diesen Sortierungen kann er dann eine durchschnittliche Bewertung pro Run errechnen und diese so in eine Gesamtreihenfolge bringen. Die folgende Abbildung zeigt die Simulation mehrerer Runs, in der alle 30.000 Iterationen die schlechtere Hälfte terminiert wurde:
+![Mehrere Durchläufe](./images/4resultChartRankingCutoff.png)
